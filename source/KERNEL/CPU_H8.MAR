@@ -1,0 +1,162 @@
+;
+;	Program	cpu_h8.mar
+;	Date	2002/7/7 .. 2002/8/20
+;	Copyright (C) 2002 by AKIYA
+;
+;	プロセッサ依存コードをここで記述
+;
+	.section	P, CODE, ALIGN=2
+
+;- kernel save context -
+; entry	 er0 = context buffer top
+; return er0 = 0;
+; break	 er0,er1
+	.export	__kernel_save_context
+__kernel_save_context:
+	mov.l	sp,@er0		; sp
+	mov.l	er1,@(4*2,er0)	; er1
+	mov.l	@sp,er1
+	mov.l	er1,@(4*1,er0)	; ret
+	mov.l	er2,@(4*3,er0)	; er2
+	mov.l	er3,@(4*4,er0)	; er3
+	mov.l	er4,@(4*5,er0)	; er4
+	mov.l	er5,@(4*6,er0)	; er5
+	mov.l	er6,@(4*7,er0)	; er6
+	sub.l	er0,er0
+	rts
+
+;- kernel load context -
+; entry	 er0 = context buffer top
+;	 er1 = return code
+; return er0 = return code
+; break	 er0,er1
+	.export	__kernel_load_context
+__kernel_load_context:
+	mov.l	@er0,sp
+	mov.l	er1,@-sp
+	mov.l	@(4*1,er0),er1
+	mov.l	er1,@(4,sp)
+	mov.l	@(4*2,er0),er1
+	mov.l	@(4*3,er0),er2
+	mov.l	@(4*4,er0),er3
+	mov.l	@(4*5,er0),er4
+	mov.l	@(4*6,er0),er5
+	mov.l	@(4*7,er0),er6
+	mov.l	@sp+,er0
+	bne	__kernel_load_context_0:8
+	not.l	er0
+__kernel_load_context_0
+	rts
+
+;- kernel interrupt handler entry -
+; entry	 none.
+; return none.
+; break	 none.
+	.export	_i28x4
+__kernel_inthdl_entry:
+_i08x4	jsr	@__kernel_inthdl_io	; H'08*4 = H'20 を先頭にする。
+_i09x4	jsr	@__kernel_inthdl_io
+_i10x4	jsr	@__kernel_inthdl_io
+_i11x4	jsr	@__kernel_inthdl_io
+_i12x4	jsr	@__kernel_inthdl_io
+_i13x4	jsr	@__kernel_inthdl_io
+_i14x4	jsr	@__kernel_inthdl_io
+_i15x4	jsr	@__kernel_inthdl_io
+_i16x4	jsr	@__kernel_inthdl_io
+_i17x4	jsr	@__kernel_inthdl_io
+_i18x4	jsr	@__kernel_inthdl_io
+_i19x4	jsr	@__kernel_inthdl_io
+_i20x4	jsr	@__kernel_inthdl_io
+_i21x4	jsr	@__kernel_inthdl_io
+_i22x4	jsr	@__kernel_inthdl_io
+_i23x4	jsr	@__kernel_inthdl_io
+_i24x4	jsr	@__kernel_inthdl_io
+_i25x4	jsr	@__kernel_inthdl_io
+_i26x4	jsr	@__kernel_inthdl_io
+_i27x4	jsr	@__kernel_inthdl_io
+_i28x4	jsr	@__kernel_inthdl_io
+_i29x4	jsr	@__kernel_inthdl_io
+_i30x4	jsr	@__kernel_inthdl_io
+_i31x4	jsr	@__kernel_inthdl_io
+_i32x4	jsr	@__kernel_inthdl_io
+_i33x4	jsr	@__kernel_inthdl_io
+_i34x4	jsr	@__kernel_inthdl_io
+_i35x4	jsr	@__kernel_inthdl_io
+_i36x4	jsr	@__kernel_inthdl_io
+_i37x4	jsr	@__kernel_inthdl_io
+_i38x4	jsr	@__kernel_inthdl_io
+_i39x4	jsr	@__kernel_inthdl_io
+_i40x4	jsr	@__kernel_inthdl_io
+_i41x4	jsr	@__kernel_inthdl_io
+_i42x4	jsr	@__kernel_inthdl_io
+_i43x4	jsr	@__kernel_inthdl_io
+_i44x4	jsr	@__kernel_inthdl_io
+_i45x4	jsr	@__kernel_inthdl_io
+_i46x4	jsr	@__kernel_inthdl_io
+_i47x4	jsr	@__kernel_inthdl_io
+_i48x4	jsr	@__kernel_inthdl_io
+_i49x4	jsr	@__kernel_inthdl_io
+_i50x4	jsr	@__kernel_inthdl_io
+_i51x4	jsr	@__kernel_inthdl_io
+_i52x4	jsr	@__kernel_inthdl_io
+_i53x4	jsr	@__kernel_inthdl_io
+_i54x4	jsr	@__kernel_inthdl_io
+_i55x4	jsr	@__kernel_inthdl_io
+_i56x4	jsr	@__kernel_inthdl_io
+_i57x4	jsr	@__kernel_inthdl_io
+_i58x4	jsr	@__kernel_inthdl_io
+_i59x4	jsr	@__kernel_inthdl_io
+_i60x4	jsr	@__kernel_inthdl_io
+
+;- kernel interrupt handler in/out -
+; entry	 @sp = __kernel_inthdl_entry+offset
+; return none.
+; break	 sp
+	.import	__kernel_inthdl_io_service
+__kernel_inthdl_io:
+	mov.l	er0,@-sp
+	mov.l	@(4,sp),er0
+	mov.l	er1,@(4,sp)
+	mov.l	#__kernel_inthdl_entry+4-H'20,er1 ; H'20 を CPU_H8.H へ反映せよ
+	sub.l	er1,er0	; er0=H'20(TRAPA #0)..H'H'f0(ADI)
+	jsr	@__kernel_inthdl_io_service
+	orc	#B'11000000,ccr
+	mov.l	@sp+,er0
+	mov.l	@sp+,er1
+	rte
+
+	.section	D, DATA, ALIGN=2
+
+	.import	__kernel_inthdl_null
+	.export	__kernel_inthdl_table
+__kernel_inthdl_table:
+	.data.l	__kernel_inthdl_null, __kernel_inthdl_null	;  8, 9
+	.data.l	__kernel_inthdl_null, __kernel_inthdl_null	; 10,11
+	.data.l	__kernel_inthdl_null, __kernel_inthdl_null	; 12,13
+	.data.l	__kernel_inthdl_null, __kernel_inthdl_null	; 14,15
+	.data.l	__kernel_inthdl_null, __kernel_inthdl_null	; 16,17
+	.data.l	__kernel_inthdl_null, __kernel_inthdl_null	; 18,19
+	.data.l	__kernel_inthdl_null, __kernel_inthdl_null	; 20,21
+	.data.l	__kernel_inthdl_null, __kernel_inthdl_null	; 22,23
+	.data.l	__kernel_inthdl_null, __kernel_inthdl_null	; 24,25
+	.data.l	__kernel_inthdl_null, __kernel_inthdl_null	; 26,27
+	.data.l	__kernel_inthdl_null, __kernel_inthdl_null	; 28,29
+	.data.l	__kernel_inthdl_null, __kernel_inthdl_null	; 30,31
+	.data.l	__kernel_inthdl_null, __kernel_inthdl_null	; 32,33
+	.data.l	__kernel_inthdl_null, __kernel_inthdl_null	; 34,35
+	.data.l	__kernel_inthdl_null, __kernel_inthdl_null	; 36,37
+	.data.l	__kernel_inthdl_null, __kernel_inthdl_null	; 38,39
+	.data.l	__kernel_inthdl_null, __kernel_inthdl_null	; 40,41
+	.data.l	__kernel_inthdl_null, __kernel_inthdl_null	; 42,43
+	.data.l	__kernel_inthdl_null, __kernel_inthdl_null	; 44,45
+	.data.l	__kernel_inthdl_null, __kernel_inthdl_null	; 46,47
+	.data.l	__kernel_inthdl_null, __kernel_inthdl_null	; 48,49
+	.data.l	__kernel_inthdl_null, __kernel_inthdl_null	; 50,51
+	.data.l	__kernel_inthdl_null, __kernel_inthdl_null	; 52,53
+	.data.l	__kernel_inthdl_null, __kernel_inthdl_null	; 54,55
+	.data.l	__kernel_inthdl_null, __kernel_inthdl_null	; 56,57
+	.data.l	__kernel_inthdl_null, __kernel_inthdl_null	; 58,59
+	.data.l	__kernel_inthdl_null				; 60
+
+	.end
+

@@ -1,0 +1,94 @@
+### for MAKE Version 4.0  Copyright (c) 1987, 1996 Borland International ###
+
+#=== macro's ===
+C38 = cc38h -CPU=300HA -I=\work\H8-3048F\h8c\include $<
+ASM = A38H $<-CPU=300HA:24 #-DEBUG
+LNK = L38H -SUBCOMMAND=$&.sub #-DEBUG
+CNV = C38H $<
+
+#=== roule's ===
+.c.obj:
+	$(C38)
+	@move $&.obj $:
+.mar.obj:
+	$(ASM) #> $&.tag
+.abs.mot:
+	$(CNV)
+
+#--- link's ---
+SYSTEM =	system\_vect.obj system\_setup.obj system\_initlow.obj \
+		system\_init.obj system\_initlib.obj system\_initiol.obj \
+		system\_initoth.obj system\_closeal.obj system\_lowsrc.obj \
+		system\maintask.obj
+#		system\machine.obj system\lcddrv.obj \
+#		system\dbglib.obj
+KERNEL =	kernel\kernel.obj kernel\vkernel.obj kernel\cpu_h8.obj \
+		kernel\tmr_h8.obj
+DEBUGER =	object\debuger.obj
+OTHERLIB =	object\machine.obj
+LIB =		..\..\h8c\lib\c38hab.lib
+
+#--- final target ---
+
+nitron40.mot:	nitron40.abs
+
+#--- make .abs ---
+nitron40.abs:	$(SYSTEM) $(DEBUGER) $(OTHERLIB) $(KERNEL) \
+		makefile
+	@copy &&!
+OUTPUT $&
+INPUT $(SYSTEM)
+INPUT $(DEBUGER)
+INPUT $(OTHERLIB)
+INPUT $(KERNEL)
+LIBRARY $(LIB)
+START Cvect0x4(0)
+START Cvect28x4(70)
+START Cvect56x4(0e0)
+START P,C,D(200)
+START R,B,S(0FFF010)
+START ST(0FFFF10)
+START DEBUG_ROM(2000),DEBUG_RAM(0FFEF10),DEBUG_SCI(0FFFFB8)
+ROM (D,R)
+PRINT $&
+EXIT
+! $&.sub > nul
+	$(LNK)
+
+#--- make .obj ---
+
+system\_vect.obj:	system\_vect.c
+
+system\_setup.obj:	system\_setup.mar
+
+system\_initlow.obj:	system\_initlow.c
+
+system\_init.obj:	system\_init.c include\machine.h
+
+system\_initlib.obj:	system\_initlib.c
+
+system\_initiol.obj:	system\_initiol.c
+
+system\_initoth.obj:	system\_initoth.c
+
+system\_closeal.obj:	system\_closeal.c
+
+system\_lowsrc.obj:	system\_lowsrc.c
+
+#--- kernel ---
+
+kernel\kernel.obj:	kernel\kernel.c include\system.h \
+			include\cpu_h8.h include\vkernel.h \
+			include\itron.h include\kernel.h
+
+kernel\vkernel.obj:	kernel\vkernel.c include\system.h \
+			include\cpu_h8.h include\vkernel.h \
+			include\itron.h include\kernel.h
+
+kernel\cpu_h8.obj:	kernel\cpu_h8.mar
+
+kernel\tmr_h8.obj:	kernel\tmr_h8.c include\system.h \
+			include\cpu_h8.h include\vkernel.h \
+			include\itron.h include\kernel.h
+
+

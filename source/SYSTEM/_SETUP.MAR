@@ -1,0 +1,81 @@
+;
+;	Program	_SETUP.MAR
+;	Date	2002/6/30 .. 2002/6/30
+;	Copyright (C) 2002 by AKIYA
+;
+;### コンパイラで #pragma asm が使用できないので、ここでスタックを定義する。###
+;### デバッガ関連のエントリー名にアンダースコアがないので、ここで定義する。 ###
+;
+; up date
+;	2002/7/11	SETUP.MAR -> _SETUP.MAR, add _charput, _charget
+;	2002/8/13	add _stack_area, _stack_area initilize
+;
+	.section	P, CODE, ALIGN=2
+
+	.import	_INIT
+	.export	_SETUP
+_SETUP:
+	mov.l	#startof ST,sp
+	mov.l	#(startof ST) - (startof S),er0
+	mov.l	#startof S,er1
+	mov.l	er0,@er1
+	jmp	@_INIT
+
+	.import	dbg_init
+	.export	_dbg_init
+_dbg_init:
+	jmp	@dbg_init
+
+	.import	dbg_mode_in
+	.export	_dbg_mode_in
+_dbg_mode_in:
+	jmp	@dbg_mode_in
+
+	.import	dbg_sci_err
+	.export	_dbg_sci_err
+_dbg_sci_err:
+	jmp	@dbg_sci_err
+
+	.import	dbg_sci_rxd
+	.export	_dbg_sci_rxd
+_dbg_sci_rxd:
+	jmp	@dbg_sci_rxd
+
+	.import	dbg_sci_txd
+	.export	_dbg_sci_txd
+_dbg_sci_txd
+	jmp	@dbg_sci_txd
+
+	.import	dbg_putc
+	.export	_charput
+_charput:
+	jsr	@dbg_putc
+	bcc	_charput:8
+	rts
+
+	.import	dbg_getc
+	.export	_charget
+_charget:
+	jsr	@dbg_getc
+	bcc	_charget:8
+	;/// if echo ///
+	bsr	_charput
+	cmp.b	#H'0d,r0l
+	bne	_charget_echo:8
+	mov.b	#H'0a,r0l
+	bsr	_charput
+	mov.b	#H'0d,r0l
+_charget_echo
+	;/// end if ///
+	rts
+
+	.section	S, DATA, ALIGN=2
+
+	.export	_stack_area
+_stack_area:
+
+	.section	ST, DATA, ALIGN=2
+
+	.end
+
+
